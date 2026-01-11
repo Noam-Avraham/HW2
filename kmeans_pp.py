@@ -1,8 +1,9 @@
 import numpy as np
-inport sys
+import pandas as pd
+import sys
  
- def main()
- #input parsing
+def main():
+    #input parsing
     args = sys.argv
     if len(args)>6 or len(args)<5:
         print("An Error Has Occurred")
@@ -29,8 +30,15 @@ inport sys
     # we can assume validity of input files.
     input_file1=args[-2]
     input_file2=args[-1]
-#input merging
 
+    data1 = pd.read_csv(input_file1, header=None)
+    data2 = pd.read_csv(input_file2, header=None)
+
+    data = pd.merge(data1, data2, on=0, how='inner')
+    data = data.sort_values(by=0)
+    data = data.drop(columns=[0])
+
+    pd.to_csv(data, 'merged_data.csv', header=False, index=False)
 
 if __name__ == "__main__":
     main()
