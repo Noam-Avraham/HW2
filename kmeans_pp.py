@@ -1,7 +1,37 @@
 import numpy as np
 import pandas as pd
 import sys
- 
+
+
+def distance(vector1, vector2):
+	distance =0.0
+	for i in range(len(vector1)):
+		distance += (vector1[i]-vector2[i])**2
+	return np.sqrt(distance)
+
+def read_points(merged_data):
+	points = []
+	all_input = merged_data.read().strip()
+	lines=all_input.splitlines()
+
+	for line in lines:
+		if not line.strip():
+			continue
+		coards_string=line.split(',')
+		current_point=[]
+		
+		for coard in coards_string:
+			try:
+				coard_float = float(coard)
+			except ValueError:
+				print("An Error Has Occurred")
+				sys.exit(1)
+			coard_float=float(coard)
+			current_point.append(coard_float)
+		points.append(current_point)
+
+	return points
+
 def main():
     #input parsing
     np.random.seed(1234)
@@ -40,7 +70,6 @@ def main():
     # we can assume validity of input files.
     input_file1=args[-2]
     input_file2=args[-1]
-
     data1 = pd.read_csv(input_file1, header=None)
     data2 = pd.read_csv(input_file2, header=None)
 
@@ -49,13 +78,6 @@ def main():
     data = data.drop(columns=[0])
 
 
-
-
-def distance(vector1, vector2):
-	distance =0.0
-	for i in range(len(vector1)):
-		distance += (vector1[i]-vector2[i])**2
-	return math.sqrt(distance)
 
 # returns new distances.
 def calculate_new_distances(points, clusters, points_distances, points_to_cluster):
@@ -88,3 +110,5 @@ def calc_prob_all_points(distances):
 
 if __name__ == "__main__":
     main()
+
+
