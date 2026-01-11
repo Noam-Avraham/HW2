@@ -1,13 +1,37 @@
 import numpy as np
 import pandas as pd
 import sys
- 
+def distance(vector1, vector2):
+	distance =0.0
+	for i in range(len(vector1)):
+		distance += (vector1[i]-vector2[i])**2
+	return math.sqrt(distance)
+
+def read_points(merged_data):
+	points = []
+	all_input = merged_data.read().strip()
+	lines=all_input.splitlines()
+
+	for line in lines:
+		if not line.strip():
+			continue
+		coards_string=line.split(',')
+		current_point=[]
+		
+		for coard in coards_string:
+			try:
+				coard_float = float(coard)
+			except ValueError:
+				print("An Error Has Occurred")
+				sys.exit(1)
+			coard_float=float(coard)
+			current_point.append(coard_float)
+		points.append(current_point)
+
+	return points
+
 def main():
-<<<<<<< HEAD
- #input parsing k is clusters number, max_iter is maximum iterations, eps is epsilon for convergence, input_file1 and input_file2 are input files.
-=======
     #input parsing
->>>>>>> 7cf94eb4060c01620465848109375784b327f95d
     args = sys.argv
     if len(args)>6 or len(args)<5:
         print("An Error Has Occurred")
@@ -43,23 +67,41 @@ def main():
     # we can assume validity of input files.
     input_file1=args[-2]
     input_file2=args[-1]
-<<<<<<< HEAD
-#input merging
+    #input merging
     
     data1 = pd.read_csv(input_file1, header=None)
     data2 = pd.read_csv(input_file2, header=None)
 
-=======
-
-    data1 = pd.read_csv(input_file1, header=None)
-    data2 = pd.read_csv(input_file2, header=None)
-
->>>>>>> 7cf94eb4060c01620465848109375784b327f95d
     data = pd.merge(data1, data2, on=0, how='inner')
     data = data.sort_values(by=0)
     data = data.drop(columns=[0])
 
     pd.to_csv(data, 'merged_data.csv', header=False, index=False)
+    #clusters initialization
+    
+
+    points = read_points()
+	if not points:
+		print("An Error Has Occurred")
+		sys.exit(1)
+	points_num = len(points)
+	#point in i place in order is assign to cluster points_to_clusters[i]
+	points_to_clusters = [-1 for x in range(points_num)]
+
+	# all points must have same dimension
+	dim = len(points[0])
+	
+	for p in points:
+		if len(p) != dim:
+			print("An Error Has Occurred")
+			sys.exit(1)
+	
+	if(k<=1 or k>=len(points)):
+		print("Incorrect number of clusters!")
+		sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
+
+
