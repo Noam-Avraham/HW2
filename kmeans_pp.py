@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import sys
+import mykmeanssp
 
 
 def distance(vector1, vector2):
@@ -29,10 +30,10 @@ def main():
         try:
             max_iter=int(args[2])
         except ValueError:
-            print("Incorrect number of iterations!")
+            print("Incorrect maximum iteration!")
             sys.exit(1)
         if max_iter<=0 or max_iter>=800:
-            print("Incorrect number of iterations!")
+            print("Incorrect maximum iteration!")
             sys.exit(1)
     try:
         eps=float(args[-3])
@@ -52,6 +53,7 @@ def main():
 
     data = pd.merge(data1, data2, on=0, how='inner')
     data = data.sort_values(by=0)
+    observed_ids = data.iloc[:, 0].values
     data = data.drop(columns=[0])
 
     if data.isnull().values.any():
@@ -65,11 +67,17 @@ def main():
         sys.exit(1)
 
     points = data.to_numpy()
-
+    
+    if k >=len(points):
+        print("Incorrect number of clusters!")
+        sys.exit(1)
     # create clusters array:
+    clusters_keys=[]
     clusters = []
     points_indecies = [i for i in range(len(points))]
-    clusters.append(points[np.random.choice(points_indecies)])
+    first_index=np.random.choice(points_indecies)
+    clusters_keys.append(first_index)
+    clusters.append(points[first_index])
     points_to_cluster = [0 for _ in range(len(points))]
     points_distances = [distance(points[i], clusters[0]) for i in range(len(points))]
 
@@ -77,7 +85,7 @@ def main():
         # calculate probabilities for all points
         probabilities = calc_prob_all_points(points_distances)
         # get new cluster
-        get_new_cluster(points, clusters, probabilities, points_indecies)
+        get_new_cluster(points, clusters, probabilities, points_indecies,clusters_keys)
         # calculate new distances
         calculate_new_distances(points, clusters, points_distances, points_to_cluster)
          
@@ -97,10 +105,11 @@ def calculate_new_distances(points, clusters, points_distances, points_to_cluste
 
 
 # appends new cluster to the array
-def get_new_cluster(points, clusters, probabilities, points_indecies):
+def get_new_cluster(points, clusters, probabilities, points_indecies,clusters_keys):
     # chooses a random point based on probabilities.
     new_cluster = np.random.choice(points_indecies, p=probabilities)
     clusters.append(points[new_cluster])
+    clusters_keys.append(new_cluster)
 
 # returns porpability for all points
 def calc_prob_all_points(distances):
@@ -108,8 +117,16 @@ def calc_prob_all_points(distances):
     sum_dis = sum(distances)
     probabilities = [distances[i] / sum_dis for i in range(len(distances))]
     return probabilities
-    
-    
+C_points=points.tolist()
+dim=len(points[0])
+n=len(points)
+try :
+    result=mykmeanssp.fit(C_points,clusters,points_to_cluster, k,  max_iter,dim, eps)
+except Exception:
+    print("An Error Has Occurred")
+    sys.exit(1)
+
+
     
 
 if __name__ == "__main__":
