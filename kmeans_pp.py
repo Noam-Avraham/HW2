@@ -88,8 +88,17 @@ def main():
         get_new_cluster(points, clusters, probabilities, points_indecies,clusters_keys)
         # calculate new distances
         calculate_new_distances(points, clusters, points_distances, points_to_cluster)
-         
-    print(clusters)
+    # call c extension for kmeans
+    C_points=points.tolist()
+    dim=len(points[0])
+    n=len(points)
+    try :
+        result=mykmeanssp.fit(C_points,clusters,points_to_cluster, k,  max_iter,dim, eps)
+    except Exception:
+        print("An Error Has Occurred")
+        sys.exit(1)
+    printclusters(result)
+
 
 
 # updates the points_to_cluster and points_distances arrays.
@@ -117,14 +126,13 @@ def calc_prob_all_points(distances):
     sum_dis = sum(distances)
     probabilities = [distances[i] / sum_dis for i in range(len(distances))]
     return probabilities
-C_points=points.tolist()
-dim=len(points[0])
-n=len(points)
-try :
-    result=mykmeanssp.fit(C_points,clusters,points_to_cluster, k,  max_iter,dim, eps)
-except Exception:
-    print("An Error Has Occurred")
-    sys.exit(1)
+def print_clusters(clusters):
+	for cluster in clusters:
+		st=[]
+		for x in range(len(cluster)):
+			st.append('{0:.4f}'.format(cluster[x]))
+		print(','.join(st))
+
 
 
     
