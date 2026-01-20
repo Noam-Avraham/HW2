@@ -28,28 +28,44 @@ double copy_vector(double* src, int dim) {
     }   
     return dest;
 }
-void update_clusters(double** points, double** clusters, int* points_to_cluster,double** clusters_sums,int* clusters_counts, int k, int dim, int n){
+double update_clusters(double** points, double** clusters, int* points_to_cluster,double** clusters_sums,int* clusters_counts, int k, int dim, int n, double epsilon) {
     /** reassign the first point to empty cluster */
     int i,j;
+    double max_changed;
+    double distance_change;
     int previous_index;
+    double* cluster_temp;
+    /** handle empty clusters */
     for (i = 0; i < k; i++) {
-        clusters_counts[i] = 0;
-        previous_index= points_to_cluster[0];
-        points_to_cluster[0]=i;
-        for(j = 0; j < dim; j++) {
-            clusters_sums[previous_index][j]-= points[0][j];
-            clusters_sums[i][j]+=points[0][j];
+        if (clusters_counts[i]==0)
+        {
+            previous_index= points_to_cluster[0];
+            points_to_cluster[0]=i;
+            for(j = 0; j < dim; j++) {
+                clusters_sums[previous_index][j]-= points[0][j];
+                clusters_sums[i][j]+=points[0][j];
+            } 
+        clusters_counts[i]++;
+        clusters_counts[previous_index]--;
         }
     }
-    }   
+       
     /** calculate new clusters centers */
     for(i = 0; i < k; i++) {
+        cluster_temp=copy_vector(clusters[i],dim);
         if(clusters_counts[i] > 0) {
             for(j = 0; j < dim; j++) {
                 clusters[i][j] = clusters_sums[i][j] / clusters_counts[i];
             }
         }
+        distance_change = distance(cluster_temp, clusters[i], dim);
+        free(cluster_temp);
+        if (i == 0 || distance_change > max_changed) {
+            max_changed = distance_change;
+        }
     }
+    return max_changed;
+}
 void update_points(double** points, double** clusters, int* points_to_cluster,double** clusters_sums, int* clusters_counts, int k, int dim, int n) {
     /** assign each point to the nearest cluster */
     int i,j;
@@ -109,21 +125,27 @@ static PyObject* fit(PyObject* self, PyObject* args) {
         }
     }
     /**initalize points_to_cluster to python.points_to_cluster */
-   
+
     for(i = 0; i < n; i++) {
         PyObject* cluster_index = PyList_GetItem(points_to_cluster_obj, i);
         points_to_cluster[i] = PyLong_AsLong(cluster_index);
     }
     /**initalize clusters_sums and clusters_counts */
-    
     for (i = 0; i < k; i++) {
         clusters_sums[i] = (double*)malloc(dim * sizeof(double));
     }
     int* clusters_counts = (int*)malloc(k * sizeof(int));
-   /** main kmeans loop */
-    for(i=0;i<max_iter;i++){
+   
+    for(i=0;i<n;i++){
+        assigned_cluster=points_to_cluster[i];
+        clusters_counts[assigned_cluster]++;
+        add_vectors(clusters_sums[assigned_cluster], points[i], dim, 1);
+    }
+    /** main kmeans loop */
+    for(i=0;i<max_iter;i++)
+    {
         update_points(points, clusters, points_to_cluster, clusters_sums, clusters_counts, k, dim, n);
-        max_changed = update_clusters(points, clusters, points_to_cluster, clusters_sums, clusters_counts, k, dim, n);
+        max_changed = update_clusters(points, clusters, points_to_cluster, clusters_sums, clusters_counts, k, dim, n,double eps);
         if(max_changed<eps){
             break;
         }
