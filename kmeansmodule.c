@@ -35,6 +35,7 @@ double update_clusters(double** points, double** clusters, int* points_to_cluste
     double distance_change;
     int previous_index;
     double* cluster_temp;
+    max_changed = epsilon / 2; // initialize to a value less than epsilon
     /** handle empty clusters */
     for (i = 0; i < k; i++) {
         if (clusters_counts[i]==0)
@@ -52,6 +53,7 @@ double update_clusters(double** points, double** clusters, int* points_to_cluste
        
     /** calculate new clusters centers */
     for(i = 0; i < k; i++) {
+        
         cluster_temp=copy_vector(clusters[i],dim);
         if(clusters_counts[i] > 0) {
             for(j = 0; j < dim; j++) {
@@ -72,7 +74,6 @@ void update_points(double** points, double** clusters, int* points_to_cluster,do
     double min_dist, dist;
     int closest_cluster_index;
     int old_index;
-    double max_changed;
     for(i = 0; i < n; i++) {
         min_dist = distance(points[i], clusters[0], dim);
         closest_cluster_index = 0;
@@ -104,10 +105,13 @@ static PyObject* fit(PyObject* self, PyObject* args) {
     int* points_to_cluster;
     double** clusters_sums;
     int assigned_cluster;
+    double max_changed;
+    int temp_k;
 
-    if(!PyArg_ParseTuple(args, "OOOiiiid", &points_obj, &clusters_obj,&points_to_cluster_obj, &k, &max_iter, &dim,&n, &eps)) {
+    if(!PyArg_ParseTuple(args, "OOOiiiid", &points_obj, &clusters_obj,&points_to_cluster_obj, &temp_k, &max_iter, &dim,&n, &eps)) {
         return NULL;
     }
+    k=temp_k;
     points_to_cluster = (int*)malloc(n * sizeof(int));
     clusters_sums = (double**)malloc(k * sizeof(double*));
     /**initalize points to python.points */
@@ -139,9 +143,9 @@ static PyObject* fit(PyObject* self, PyObject* args) {
     /**initalize clusters_sums and clusters_counts */
     /*use calloc to initialize clusters_sums */
     for (i = 0; i < k; i++) {
-        clusters_sums[i] = (double*)calloc(dim , sizeof(double));
+        clusters_sums[i] = (double*)calloc((size_t)dim , sizeof(double));
     }
-    int* clusters_counts = (int*)calloc(k , sizeof(int));
+    int* clusters_counts = (int*)calloc((size_t)k , sizeof(int));
    
     for(i=0;i<n;i++){
         assigned_cluster=points_to_cluster[i];
@@ -181,7 +185,7 @@ static PyMethodDef kmeansMethods[] = {
      (PyCFunction)fit,        
      METH_VARARGS,            
      PyDoc_STR("K-means clustering algorithm implementation")}, 
-    {NULL, NULL, 0, NULL}     /
+    {NULL, NULL, 0, NULL} 
 };
 
 // הגדרת המודול

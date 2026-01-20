@@ -90,13 +90,11 @@ def main():
         calculate_new_distances(points, clusters, points_distances, points_to_cluster)
     # call c extension for kmeans
     C_points=points.tolist()
+    C_clusters = [cluster.tolist() for cluster in clusters]
     dim=len(points[0])
     n=len(points)
-    try :
-        result=mykmeanssp.fit(C_points,clusters,points_to_cluster, k,  max_iter,dim, n, eps)
-    except Exception:
-        print("An Error Has Occurred")
-        sys.exit(1)
+    result=mykmeanssp.fit(C_points,C_clusters,points_to_cluster, k,  max_iter,dim, n, eps)
+
     #create string of selected ids according to selected clusters
     selected_ids = [str(int(observed_ids[idx])) for idx in clusters_keys]
     print(",".join(selected_ids))
