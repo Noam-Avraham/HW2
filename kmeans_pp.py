@@ -93,11 +93,14 @@ def main():
     dim=len(points[0])
     n=len(points)
     try :
-        result=mykmeanssp.fit(C_points,clusters,points_to_cluster, k,  max_iter,dim, eps)
+        result=mykmeanssp.fit(C_points,clusters,points_to_cluster, k,  max_iter,dim, n, eps)
     except Exception:
         print("An Error Has Occurred")
         sys.exit(1)
-    printclusters(result)
+    #create string of selected ids according to selected clusters
+    selected_ids = [str(int(observed_ids[idx])) for idx in clusters_keys]
+    print(",".join(selected_ids))
+    print_clusters(result)
 
 
 
