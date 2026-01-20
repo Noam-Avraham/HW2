@@ -19,7 +19,7 @@ double add_vectors(double* vec1, double* vec2, int dim,int opertion) {
     }
     return 0;
 }
-double copy_vector(double* src, int dim) {
+double* copy_vector(double* src, int dim) {
     int i;
     double* dest;
     dest=(double*)malloc(dim * sizeof(double));
@@ -70,23 +70,28 @@ void update_points(double** points, double** clusters, int* points_to_cluster,do
     /** assign each point to the nearest cluster */
     int i,j;
     double min_dist, dist;
-    int min_index;
+    int closest_cluster_index;
     int old_index;
+    double max_changed;
     for(i = 0; i < n; i++) {
         min_dist = distance(points[i], clusters[0], dim);
-        min_index = 0;
+        closest_cluster_index = 0;
+        old_index = points_to_cluster[i];
         for(j = 1; j < k; j++) {
             dist = distance(points[i], clusters[j], dim);
             if(dist < min_dist) {
                 min_dist = dist;
-                min_index = j;
+                closest_cluster_index = j;
             }
         }
-        points_to_cluster[i] = min_index;
-        clusters_counts[min_index]++;
-        add_vectors(clusters_sums[min_index], points[i], dim, 1);
-        clusters_counts[old_index]--;
-        add_vectors(clusters_sums[old_index], points[i], dim, -1);
+        if(closest_cluster_index != old_index) {
+            points_to_cluster[i] = closest_cluster_index;
+            clusters_counts[closest_cluster_index]++;
+            add_vectors(clusters_sums[closest_cluster_index], points[i], dim, 1);
+            clusters_counts[old_index]--;
+            add_vectors(clusters_sums[old_index], points[i], dim, -1);
+        }
+
     }
 }
 
@@ -98,6 +103,7 @@ static PyObject* fit(PyObject* self, PyObject* args) {
     int i,j;
     int* points_to_cluster;
     double** clusters_sums;
+    int assigned_cluster;
 
     if(!PyArg_ParseTuple(args, "OOOiiiid", &points_obj, &clusters_obj,&points_to_cluster_obj, &k, &max_iter, &dim,&n, &eps)) {
         return NULL;
@@ -131,10 +137,11 @@ static PyObject* fit(PyObject* self, PyObject* args) {
         points_to_cluster[i] = PyLong_AsLong(cluster_index);
     }
     /**initalize clusters_sums and clusters_counts */
+    /*use calloc to initialize clusters_sums */
     for (i = 0; i < k; i++) {
-        clusters_sums[i] = (double*)malloc(dim * sizeof(double));
+        clusters_sums[i] = (double*)calloc(dim , sizeof(double));
     }
-    int* clusters_counts = (int*)malloc(k * sizeof(int));
+    int* clusters_counts = (int*)calloc(k , sizeof(int));
    
     for(i=0;i<n;i++){
         assigned_cluster=points_to_cluster[i];
@@ -145,7 +152,7 @@ static PyObject* fit(PyObject* self, PyObject* args) {
     for(i=0;i<max_iter;i++)
     {
         update_points(points, clusters, points_to_cluster, clusters_sums, clusters_counts, k, dim, n);
-        max_changed = update_clusters(points, clusters, points_to_cluster, clusters_sums, clusters_counts, k, dim, n,double eps);
+        max_changed = update_clusters(points, clusters, points_to_cluster, clusters_sums, clusters_counts, k, dim, n,eps);
         if(max_changed<eps){
             break;
         }
