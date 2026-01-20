@@ -2,6 +2,23 @@
 #include <Python.h>
 #include <stdlib.h>
 #include <math.h>
+void* safe_malloc(size_t size) {
+   void* ptr=NULL;
+    while (ptr==NULL)
+   {
+    void* ptr = malloc(size);
+   }
+    return ptr*;
+}
+
+void* safe_calloc(size_t amount, size_t size) {
+   void* ptr=NULL;
+    while (ptr==NULL)
+   {
+    void* ptr = calloc(amount, size);
+   }
+    return ptr*;
+}
 
 double distance(double* point1, double* point2, int dim) {
     double sum = 0.0;
@@ -22,7 +39,7 @@ double add_vectors(double* vec1, double* vec2, int dim,int opertion) {
 double* copy_vector(double* src, int dim) {
     int i;
     double* dest;
-    dest=(double*)malloc(dim * sizeof(double));
+    dest=(double*)safe_malloc(dim * sizeof(double));
     for(i = 0; i < dim; i++) {
         dest[i] = src[i];
     }   
@@ -112,12 +129,12 @@ static PyObject* fit(PyObject* self, PyObject* args) {
         return NULL;
     }
     k=temp_k;
-    points_to_cluster = (int*)malloc(n * sizeof(int));
-    clusters_sums = (double**)malloc(k * sizeof(double*));
+    points_to_cluster = (int*)safe_malloc(n * sizeof(int));
+    clusters_sums = (double**)safe_malloc(k * sizeof(double*));
     /**initalize points to python.points */
-    double** points = (double**)malloc(n * sizeof(double*));
+    double** points = (double**)safe_malloc(n * sizeof(double*));
     for(i = 0; i < n; i++) {
-        points[i] = (double*)malloc(dim * sizeof(double));
+        points[i] = (double*)safe_malloc(dim * sizeof(double));
         PyObject* point = PyList_GetItem(points_obj, i);
         for(j = 0; j < dim; j++) {
             PyObject* coord =  PyList_GetItem(point, j);
@@ -125,9 +142,9 @@ static PyObject* fit(PyObject* self, PyObject* args) {
         }
     }
     /**initalize clusters to python.clusters */
-    double** clusters = (double**)malloc(k * sizeof(double*));
+    double** clusters = (double**)safe_malloc(k * sizeof(double*));
     for(i = 0; i < k; i++) {
-        clusters[i] = (double*)malloc(dim * sizeof(double));
+        clusters[i] = (double*)safe_malloc(dim * sizeof(double));
         PyObject* cluster = PyList_GetItem(clusters_obj, i);
         for(j = 0; j < dim; j++) {
             PyObject* coord = PyList_GetItem(cluster, j);
@@ -143,9 +160,9 @@ static PyObject* fit(PyObject* self, PyObject* args) {
     /**initalize clusters_sums and clusters_counts */
     /*use calloc to initialize clusters_sums */
     for (i = 0; i < k; i++) {
-        clusters_sums[i] = (double*)calloc((size_t)dim , sizeof(double));
+        clusters_sums[i] = (double*)safe_calloc((size_t)dim , sizeof(double));
     }
-    int* clusters_counts = (int*)calloc((size_t)k , sizeof(int));
+    int* clusters_counts = (int*)safe_calloc((size_t)k , sizeof(int));
    
     for(i=0;i<n;i++){
         assigned_cluster=points_to_cluster[i];
@@ -170,6 +187,19 @@ static PyObject* fit(PyObject* self, PyObject* args) {
         }
     PyList_SetItem(py_result, i, py_finalcluster);
     }
+    /**free allocated memory */
+    for(i = 0; i < n; i++) {
+        free(points[i]);
+    } 
+    free(points);
+    for(i = 0; i < k; i++) {
+        free(clusters[i]);
+        free(clusters_sums[i]);
+    }
+    free(clusters);
+    free(clusters_sums);
+    free(points_to_cluster);
+    free(clusters_counts);
     return py_result;
 }
 
