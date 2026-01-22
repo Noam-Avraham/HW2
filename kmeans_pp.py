@@ -20,7 +20,7 @@ def main():
     except ValueError:
         print("Incorrect number of clusters!")
         sys.exit(1)
-    if k<=0:
+    if k<=1:
         print("Incorrect number of clusters!")
         sys.exit(1)
 
@@ -32,7 +32,7 @@ def main():
         except ValueError:
             print("Incorrect maximum iteration!")
             sys.exit(1)
-        if max_iter<=0 or max_iter>=800:
+        if max_iter<=1 or max_iter>=800:
             print("Incorrect maximum iteration!")
             sys.exit(1)
     try:

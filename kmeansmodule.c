@@ -3,21 +3,23 @@
 #include <stdlib.h>
 #include <math.h>
 void* safe_malloc(size_t size) {
-   void* ptr=NULL;
+   void* ptr;
+   ptr=malloc(size);
     while (ptr==NULL)
    {
-    void* ptr = malloc(size);
+        ptr = malloc(size);
    }
-    return ptr*;
+    return ptr;
 }
 
 void* safe_calloc(size_t amount, size_t size) {
-   void* ptr=NULL;
+   void* ptr;
+   ptr=calloc(amount, size);
     while (ptr==NULL)
    {
-    void* ptr = calloc(amount, size);
+        ptr = calloc(amount, size);
    }
-    return ptr*;
+    return ptr;
 }
 
 double distance(double* point1, double* point2, int dim) {
